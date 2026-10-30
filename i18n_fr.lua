@@ -1,0 +1,18 @@
+return {
+    ["Dots and Boxes"]                      = { fr = "Pipopipette", es = "Timbiriche", de = "Käsekästchen" },
+    ["Dots and Boxes — draw lines, close boxes, keep control."] = { fr = "Pipopipette — tracez des traits, fermez des cases, gardez la main.", es = "Timbiriche — traza líneas, cierra cuadros, conserva el control.", de = "Käsekästchen — Linien ziehen, Kästchen schließen, die Kontrolle behalten." },
+    ["Black %1 – White %2"]                 = { fr = "Noirs %1 – Blancs %2", es = "Negras %1 – Blancas %2", de = "Schwarz %1 – Weiß %2" },
+    ["Black"]                               = { fr = "Noirs", es = "Negras", de = "Schwarz" },
+    ["White"]                               = { fr = "Blancs", es = "Blancas", de = "Weiß" },
+    ["Black wins!"]                         = { fr = "Les Noirs gagnent !", es = "¡Ganan las negras!", de = "Schwarz gewinnt!" },
+    ["White wins!"]                         = { fr = "Les Blancs gagnent !", es = "¡Ganan las blancas!", de = "Weiß gewinnt!" },
+    ["%1 to move"]                          = { fr = "%1 jouent", es = "Mueven %1", de = "%1 ist am Zug" },
+    ["Draw!"]                               = { fr = "Match nul !", es = "¡Empate!", de = "Unentschieden!" },
+    ["AI is thinking..."]                   = { fr = "L'IA réfléchit...", es = "La IA está pensando...", de = "KI denkt nach..." },
+    ["Players"]                             = { fr = "Joueurs", es = "Jugadores", de = "Spieler" },
+    ["1 player (vs AI)"]                    = { fr = "1 joueur (contre l'IA)", es = "1 jugador (contra la IA)", de = "1 Spieler (gegen KI)" },
+    ["2 players"]                           = { fr = "2 joueurs", es = "2 jugadores", de = "2 Spieler" },
+    ["Play as"]                             = { fr = "Jouez avec", es = "Jugar como", de = "Spielen als" },
+    ["Play as: %1"]                         = { fr = "Vous jouez : %1", es = "Juegas con: %1", de = "Du spielst: %1" },
+    ["Size"]                                = { fr = "Taille", es = "Tamaño", de = "Größe" },
+}
