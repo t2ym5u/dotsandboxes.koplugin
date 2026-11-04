@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2026-11-04
+
+### Changed
+- Hard never thinks longer than about 2.5 s on an e-reader (its longest
+  6×6 searches took over 3 s on a Kobo). When it has to stop early it plays
+  Medium's move as before, or a better one it had already proved.
+
 ## [1.0.3] - 2026-11-03
 
 ### Changed

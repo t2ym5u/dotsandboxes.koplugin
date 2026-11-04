@@ -46,9 +46,10 @@ lines per game, seats alternated (wins-losses-draws):
 
 On 6×6, hard's slowest single move took 0.25 s and its slowest whole turn
 (every line it draws before handing over, here a long run of captures against
-a random player) 0.46 s; a 1 GHz e-reader is roughly 5-10× slower. The search
-gives up past a node budget and falls back to medium's move, so a move can
-never run away.
+a random player) 0.46 s; a 1 GHz e-reader such as a Kobo Aura is roughly 25×
+slower. The search gives up past a node budget or 2.5 s of thinking (whichever
+comes first) and then plays medium's move -- or a better one it had already
+proved -- so a move can never run away.
 
 ## Controls
 
