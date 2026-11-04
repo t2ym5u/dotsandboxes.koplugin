@@ -33,6 +33,17 @@ DotsAI.NODE_BUDGET = 150000   -- abort and fall back to medium past this...
 DotsAI.LOONY_BUDGET = 600000  -- ...or past this once no safe line is left,
                               -- where a fallback would throw the game away
 
+-- CPU-time cap (os.clock seconds) on one hard move, the same fallback as the
+-- node budgets. Node counts alone let a 6×6 search run ~3 s on a Kobo (about
+-- 25x slower than a desktop); with this no move takes more than ~2.5 s there.
+-- Most searches finish far below either limit.
+DotsAI.TIME_BUDGET = 2.5
+-- Multiplies TIME_BUDGET; test harnesses set it to ~0.04 to reproduce on a
+-- desktop what a Kobo can search in the same budget.
+DotsAI.time_scale = 1
+
+local clock = os.clock
+
 -- Deterministic per-edge hash keys (a sum of random 45-bit integers stays
 -- exact in a double, and does not touch math.random's sequence).
 local KEYS = {}
@@ -213,8 +224,10 @@ local function solve(s, alpha, beta, tt, budget)
         if lo > alpha then alpha = lo end
         if hi < beta then beta = hi end
     end
-    budget.nodes = budget.nodes + 1
-    if budget.nodes > budget.max then error(Abort) end
+    local nodes = budget.nodes + 1
+    budget.nodes = nodes
+    if nodes > budget.max then error(Abort) end
+    if nodes % 512 == 0 and clock() > budget.deadline then error(Abort) end
 
     local alpha0 = alpha
     local best = -math.huge
@@ -267,13 +280,17 @@ function DotsAI.clearCache()
 end
 
 -- Scores the root options: the best ones exactly, the others as "worse".
--- Returns { {e=, v=} ... }, or nil when the search ran over budget.
+-- Returns { {e=, v=} ... } and the node count, plus true when the search ran
+-- over budget: the list then holds only the options scored before that
+-- (possibly none).
 local function searchRoot(s, max_nodes)
-    local tt, budget = sharedTT(s.t.n), { nodes = 0, max = max_nodes or DotsAI.NODE_BUDGET }
+    local tt, budget = sharedTT(s.t.n), { nodes = 0, max = max_nodes or DotsAI.NODE_BUDGET,
+        deadline = clock() + DotsAI.TIME_BUDGET * DotsAI.time_scale }
     local scored = {}
+    local opts = options(s)
     local ok, err = pcall(function()
         local best = -math.huge
-        for _, e in ipairs((options(s))) do
+        for _, e in ipairs(opts) do
             local g = apply(s, e)
             local a = best - 1   -- one below: a move as good as the best stays exact
             local val
@@ -289,7 +306,7 @@ local function searchRoot(s, max_nodes)
     end)
     shared.size = shared.size + budget.nodes
     if not ok then
-        if err == Abort then return nil, budget.nodes end
+        if err == Abort then return scored, budget.nodes, true end
         error(err)
     end
     return scored, budget.nodes
@@ -356,9 +373,23 @@ local function hardMove(board, rng, stats)
     if #safe <= DotsAI.SAFE_LIMIT then
         -- An aborted search unwinds by error and leaves its state half
         -- applied, so it gets a copy; the fallback reads the clean one.
-        local scored, nodes = searchRoot(newState(board),
+        --
+        local scored, nodes, aborted = searchRoot(newState(board),
             #safe == 0 and DotsAI.LOONY_BUDGET or DotsAI.NODE_BUDGET)
-        if stats then stats.nodes = nodes; stats.searched = scored ~= nil; stats.safe = #safe end
+        if stats then stats.nodes = nodes; stats.searched = not aborted; stats.safe = #safe end
+        if aborted then
+            -- Over budget: medium's move, unless the options scored before
+            -- the cut include it and something exactly better (the best one
+            -- scored so far is exact among them). Never worse than medium.
+            local fallback = mediumMove(s, rng)
+            local fv, bv, be = nil, -math.huge, nil
+            for _, m in ipairs(scored) do
+                if m.e == fallback then fv = m.v end
+                if m.v > bv then bv, be = m.v, m.e end
+            end
+            if fv and bv > fv then return be end
+            return fallback
+        end
         if scored and #scored > 0 then
             local best, bv = {}, -math.huge
             for _, m in ipairs(scored) do
@@ -398,7 +429,7 @@ end
 -- if it does not fit the node budget.
 function DotsAI.solve(board, max_nodes)
     local s = newState(board)
-    local budget = { nodes = 0, max = max_nodes or DotsAI.NODE_BUDGET }
+    local budget = { nodes = 0, max = max_nodes or DotsAI.NODE_BUDGET, deadline = math.huge }
     local ok, v = pcall(solve, s, -math.huge, math.huge, newTT(), budget)
     if ok then return v end
     if v == Abort then return nil end

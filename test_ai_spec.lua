@@ -173,4 +173,40 @@ describe("DotsAI", function()
         end
         assert.is_true(wins > 0)
     end)
+
+    it("still plays a legal move when the time budget runs out at once", function()
+        -- time_scale 0 makes every search hit its time cap on the first
+        -- clock check: the fallback must keep the move legal.
+        local saved = AI.time_scale
+        AI.time_scale = 0
+        math.randomseed(4)
+        AI.clearCache()
+        local b = Board:new{ n = 6 }
+        while b.status == "playing" do
+            local e = AI.chooseMove(b, "hard")
+            assert.are.equal(0, b.drawn[e])
+            b:play(e)
+        end
+        AI.time_scale = saved
+    end)
+
+    it("keeps a 6x6 hard move under the Kobo budget (simulated)", function()
+        local saved = AI.time_scale
+        AI.time_scale = 0.04           -- a Kobo is ~25x slower
+        local worst = 0
+        for g = 1, 4 do
+            math.randomseed(g)
+            AI.clearCache()
+            local b = Board:new{ n = 6 }
+            while b.status == "playing" do
+                local t0 = os.clock()
+                local e = AI.chooseMove(b, "hard")
+                worst = math.max(worst, os.clock() - t0)
+                b:play(e)
+            end
+        end
+        AI.time_scale = saved
+        -- 2.5 s x 0.04 = 100 ms; generous margin for a loaded machine.
+        assert.is_true(worst < 0.3)
+    end)
 end)
