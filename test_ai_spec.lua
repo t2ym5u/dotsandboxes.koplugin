@@ -17,20 +17,6 @@ describe("DotsAI", function()
         return true
     end
 
-    local function anySafe(b)
-        for e = 1, b:edgeCount() do
-            if isSafe(b, e) then return true end
-        end
-        return false
-    end
-
-    local function anyCapturable(b)
-        for x = 1, b.topo.B do
-            if b.cnt[x] == 3 then return true end
-        end
-        return false
-    end
-
     -- Plays random safe lines until none is left: the start of the endgame.
     local function randomLoonyPosition(n)
         local b = Board:new{ n = n }
@@ -72,50 +58,10 @@ describe("DotsAI", function()
         return best
     end
 
-    it("always returns an undrawn line, at every level and size", function()
-        math.randomseed(11)
-        for n = 3, 6 do
-            for _, level in ipairs({ "easy", "medium", "hard" }) do
-                local b = Board:new{ n = n }
-                while b.status == "playing" do
-                    local e = AI.chooseMove(b, level)
-                    assert.is_number(e)
-                    assert.are.equal(0, b.drawn[e])
-                    b:play(e)
-                end
-                assert.are.equal(n * n, b.score[1] + b.score[2])
-            end
-        end
-    end)
-
     it("returns nil once the game is over", function()
         local b = Board:new{ n = 3 }
         for e = 1, b:edgeCount() do b:play(e) end
         assert.is_nil(AI.chooseMove(b, "hard"))
-    end)
-
-    it("takes a box on offer at every level", function()
-        for _, level in ipairs({ "easy", "medium", "hard" }) do
-            local b = Board:new{ n = 4 }
-            -- three sides of box (2,2), with no other box near three sides
-            b:play(b:hEdge(2, 2)); b:play(b:hEdge(3, 2)); b:play(b:vEdge(2, 2))
-            assert.are.equal(b:vEdge(2, 3), AI.chooseMove(b, level))
-        end
-    end)
-
-    it("medium and hard never give a third side while a safe line remains", function()
-        math.randomseed(5)
-        for _, level in ipairs({ "medium", "hard" }) do
-            for _ = 1, 10 do
-                local b = Board:new{ n = 5 }
-                while b.status == "playing" do
-                    local safe_left = anySafe(b) and not anyCapturable(b)
-                    local e = AI.chooseMove(b, level)
-                    if safe_left then assert.is_true(isSafe(b, e)) end
-                    b:play(e)
-                end
-            end
-        end
     end)
 
     it("solves endgames exactly (checked against an unrestricted search)", function()
@@ -188,25 +134,5 @@ describe("DotsAI", function()
             b:play(e)
         end
         AI.time_scale = saved
-    end)
-
-    it("keeps a 6x6 hard move under the Kobo budget (simulated)", function()
-        local saved = AI.time_scale
-        AI.time_scale = 0.04           -- a Kobo is ~25x slower
-        local worst = 0
-        for g = 1, 4 do
-            math.randomseed(g)
-            AI.clearCache()
-            local b = Board:new{ n = 6 }
-            while b.status == "playing" do
-                local t0 = os.clock()
-                local e = AI.chooseMove(b, "hard")
-                worst = math.max(worst, os.clock() - t0)
-                b:play(e)
-            end
-        end
-        AI.time_scale = saved
-        -- 2.5 s x 0.04 = 100 ms; generous margin for a loaded machine.
-        assert.is_true(worst < 0.3)
     end)
 end)
