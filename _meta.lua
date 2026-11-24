@@ -1,7 +1,7 @@
 local _ = require("gettext")
 
 return {
-    version     = "1.1.6",
+    version     = "1.1.7",
     fullname    = _("Dots and Boxes"),
     description = _("Dots and Boxes — draw lines, close boxes, keep control."),
 }
